@@ -1,4 +1,4 @@
-name: Windows 11 25H2 QEMU (UEFI Secure Boot Bypass + 16.4GB RAM + 250GB Disk)
+name: Windows 11 25H2 QEMU (UEFI Secure Boot Bypass + 16GB RAM + 530GB Disk)
 
 on:
   workflow_dispatch:
@@ -32,11 +32,11 @@ jobs:
           echo "=== Enabling KVM Permissions ==="
           sudo chmod 666 /dev/kvm || true
 
-          echo "=== Creating Main Virtual Disk (250GB qcow2) ==="
-          qemu-img create -f qcow2 /tmp/main_disk.qcow2 250G
+          echo "=== Creating Main Virtual Disk (530GB qcow2) ==="
+          qemu-img create -f qcow2 /tmp/main_disk.qcow2 530G
 
-          echo "=== Creating Empty USB Flash Drive (32GB RAW) ==="
-          qemu-img create -f raw /tmp/usb_flash_32G.img 32G
+          echo "=== Creating Empty USB Flash Drive (64GB RAW) ==="
+          qemu-img create -f raw /tmp/usb_flash_64G.img 64G
 
       - name: 2. Download Win11 ISO, Chrome, Drivers & Create Bypass Config
         run: |
@@ -133,7 +133,7 @@ jobs:
           qemu-system-x86_64 \
             -enable-kvm \
             -machine q35,accel=kvm \
-            -m 16793 \
+            -m 16384 \
             -smp 4,sockets=1,cores=4,threads=1 \
             -cpu host \
             -drive if=pflash,format=raw,unit=0,file=/tmp/OVMF_CODE.fd,readonly=on \
@@ -144,7 +144,7 @@ jobs:
             -drive file=/tmp/main_disk.qcow2,format=qcow2,index=0,media=disk,cache=unsafe,aio=threads \
             -drive file=/tmp/win_setup.iso,index=1,media=cdrom \
             -drive file=/tmp/software.iso,index=2,media=cdrom \
-            -drive file=/tmp/usb_flash_32G.img,format=raw,if=none,id=usbdrive \
+            -drive file=/tmp/usb_flash_64G.img,format=raw,if=none,id=usbdrive \
             -device qemu-xhci,id=xhci \
             -device usb-storage,bus=xhci.0,drive=usbdrive,removable=true \
             -device usb-tablet,bus=xhci.0 \
@@ -167,9 +167,9 @@ jobs:
           echo " Machine       : Q35 + OVMF (UEFI & Secure Boot)"
           echo " CPU Mode      : Host Passthrough (-cpu host)"
           echo " TPM Emulation : TPM 2.0 (swtpm enabled)"
-          echo " RAM Allocated : 16.4 GB (16793 MB)"
-          echo " Main Disk     : 250 GB (qcow2)"
-          echo " USB Flash     : 32 GB (Removable USB Storage)"
+          echo " RAM Allocated : 16 GB (16384 MB)"
+          echo " Main Disk     : 530 GB (qcow2)"
+          echo " USB Flash     : 64 GB (Removable USB Storage)"
           echo " Software CD   : Chrome + VirtIO + SharedGL + BypassReq.reg"
           echo " Web VNC URL   : http://$TAILSCALE_IP:8006/vnc.html"
           echo "=================================================="
@@ -179,3 +179,4 @@ jobs:
             sleep 300
             echo "QEMU Running | Tailscale IP: $TAILSCALE_IP | $(date)"
           done
+
