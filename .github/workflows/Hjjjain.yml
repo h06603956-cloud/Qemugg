@@ -1,0 +1,39 @@
+name: macOS VNC via Tailscale
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-vnc:
+    runs-on: macos-14
+
+    steps:
+      - name: Install Tailscale
+        run: |
+          brew install tailscale
+
+      - name: Establish Tailscale Connection
+        run: |
+          sudo tailscale up --authkey=${{ secrets.TAILSCALE_AUTHKEY }} --hostname=gh-runner-mac-${{ github.run_id }}
+          TS_IP=$(tailscale ip -4)
+          echo "TAILSCALE_IP=$TS_IP" >> $GITHUB_ENV
+          echo "Tailscale IP: $TS_IP"
+
+      - name: Set Runner Password
+        run: |
+          echo "runner:password123" | sudo chpasswd
+
+      - name: Enable macOS Screen Sharing (VNC)
+        run: |
+          sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.screensharing.plist
+          sudo launchctl kickstart -k system/com.apple.screensharing || true
+
+      - name: Connection Details & Keep Alive
+        run: |
+          echo "=== VNC ACCESS DETAILS ==="
+          echo "Tailscale IP: $(tailscale ip -4)"
+          echo "VNC Address:  vnc://$(tailscale ip -4):5900"
+          echo "Username:     runner"
+          echo "Password:     password123"
+          echo "========================="
+          sleep 21600
